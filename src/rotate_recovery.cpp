@@ -61,6 +61,7 @@ namespace rotate_recovery {
 			// get some parameters from the parameter server
 			ros::NodeHandle private_nh("~/" + name);
 
+			private_nh.param("timeout", timeout_, 20.0);
 			private_nh.param("escape_cost", escape_cost_, 100);
 			private_nh.param("lethal_cost", lethal_cost_, 253);
 			private_nh.param("min_gradient_window_size", min_gradient_window_size_, 2);
@@ -109,12 +110,18 @@ namespace rotate_recovery {
 		unsigned int cell_x, cell_y;
 		lcm->worldToMap(global_pose.pose.position.x, global_pose.pose.position.y, cell_x, cell_y);
 		int current_cost = lcm->getCost(cell_x, cell_y);
-
 		int gradient_window_size = min_gradient_window_size_;
+		auto start_time = ros::Time::now();
 
 		ROS_WARN("Escape lethal cost recovery behavior started. Current_cost: [%i]", current_cost);
 
 		while (n.ok() && current_cost > escape_cost_) {
+
+			if ((ros::Time::now() - start_time).toSec() > timeout_){
+				ROS_WARN("Escape lethal cost recovery behavior timed out. Aborting recovery behavior.");
+				return;
+			}
+
 			local_costmap_->getRobotPose(global_pose);
 			lcm->worldToMap(global_pose.pose.position.x, global_pose.pose.position.y, cell_x, cell_y);
 			current_cost = lcm->getCost(cell_x, cell_y);

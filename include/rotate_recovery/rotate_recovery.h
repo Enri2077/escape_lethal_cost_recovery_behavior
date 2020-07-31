@@ -79,6 +79,7 @@ namespace rotate_recovery {
         costmap_2d::Costmap2DROS *local_costmap_;
         bool initialized_;
 
+        double timeout_;
         int escape_cost_;
         int lethal_cost_;
         int min_gradient_window_size_;
